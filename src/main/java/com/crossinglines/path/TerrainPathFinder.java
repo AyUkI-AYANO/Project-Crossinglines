@@ -12,11 +12,12 @@ public class TerrainPathFinder {
     private record Node(BlockPos pos, double g, double f, Node parent) {}
 
     public List<BlockPos> findPath(ServerWorld world, BlockPos start, BlockPos end, RailType type, RailSettings settings) {
+        Integer undergroundY = resolveUndergroundY(world, start, end, type, settings);
         PriorityQueue<Node> open = new PriorityQueue<>(Comparator.comparingDouble(Node::f));
         Map<BlockPos, Double> bestG = new HashMap<>();
 
-        BlockPos startPos = normalize(world, start, type, settings);
-        BlockPos endPos = normalize(world, end, type, settings);
+        BlockPos startPos = normalize(world, start, type, settings, undergroundY);
+        BlockPos endPos = normalize(world, end, type, settings, undergroundY);
 
         Node startNode = new Node(startPos, 0, heuristic(startPos, endPos), null);
         open.add(startNode);
@@ -31,7 +32,7 @@ public class TerrainPathFinder {
                 return reconstruct(current);
             }
 
-            for (BlockPos next : neighbors(world, current.pos(), type, settings)) {
+            for (BlockPos next : neighbors(world, current.pos(), type, settings, undergroundY)) {
                 double tentativeG = current.g() + moveCost(current.pos(), next, type);
                 if (tentativeG >= bestG.getOrDefault(next, Double.POSITIVE_INFINITY)) continue;
 
@@ -44,7 +45,7 @@ public class TerrainPathFinder {
         return List.of();
     }
 
-    private List<BlockPos> neighbors(ServerWorld world, BlockPos pos, RailType type, RailSettings settings) {
+    private List<BlockPos> neighbors(ServerWorld world, BlockPos pos, RailType type, RailSettings settings, Integer undergroundY) {
         List<BlockPos> result = new ArrayList<>(4);
         int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
@@ -54,8 +55,7 @@ public class TerrainPathFinder {
             int ny;
 
             if (type == RailType.UNDERGROUND) {
-                int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, nx, nz);
-                ny = Math.max(world.getBottomY() + 4, top - settings.undergroundDepth());
+                ny = undergroundY != null ? undergroundY : pos.getY();
             } else {
                 ny = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, nx, nz);
             }
@@ -91,14 +91,23 @@ public class TerrainPathFinder {
         return path;
     }
 
-    private BlockPos normalize(ServerWorld world, BlockPos pos, RailType type, RailSettings settings) {
+    private BlockPos normalize(ServerWorld world, BlockPos pos, RailType type, RailSettings settings, Integer undergroundY) {
         int y;
         if (type == RailType.UNDERGROUND) {
-            int top = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
-            y = Math.max(world.getBottomY() + 4, top - settings.undergroundDepth());
+            y = undergroundY != null ? undergroundY : pos.getY();
         } else {
             y = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
         }
         return new BlockPos(pos.getX(), y, pos.getZ());
+    }
+
+    private Integer resolveUndergroundY(ServerWorld world, BlockPos start, BlockPos end, RailType type, RailSettings settings) {
+        if (type != RailType.UNDERGROUND) {
+            return null;
+        }
+        int startTop = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, start.getX(), start.getZ());
+        int endTop = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, end.getX(), end.getZ());
+        int target = Math.min(startTop, endTop) - settings.undergroundDepth();
+        return Math.max(world.getBottomY() + 8, target);
     }
 }

@@ -3,7 +3,10 @@ package com.crossinglines.build;
 import com.crossinglines.model.BuildStatus;
 import com.crossinglines.model.RailLine;
 import com.crossinglines.model.RailSettings;
+import net.minecraft.block.BlockState;
 import com.crossinglines.planner.FacilityPolicy;
+import net.minecraft.block.DetectorRailBlock;
+import net.minecraft.block.PoweredRailBlock;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
@@ -53,10 +56,11 @@ public final class BuildTaskQueue {
 
             while (cursor < line.path().size() && placed < max) {
                 BlockPos p = line.path().get(cursor);
+                BlockPos prev = cursor > 0 ? line.path().get(cursor - 1) : null;
+                BlockPos next = cursor + 1 < line.path().size() ? line.path().get(cursor + 1) : null;
 
-                world.setBlockState(p.down(), Blocks.STONE_BRICKS.getDefaultState());
-                world.setBlockState(p, Blocks.RAIL.getDefaultState());
-                policy.decorate(world, p, cursor);
+                policy.decorate(world, p, prev, next, cursor, settings.lightSpacing());
+                placeRail(p, cursor);
 
                 cursor++;
                 placed += 4;
@@ -68,6 +72,24 @@ public final class BuildTaskQueue {
             }
 
             return false;
+        }
+
+        private void placeRail(BlockPos p, int index) {
+            int cycle = index % 8;
+            BlockState railState;
+
+            if (cycle < 4) {
+                world.setBlockState(p.down(), Blocks.STONE_BRICKS.getDefaultState());
+                railState = Blocks.RAIL.getDefaultState();
+            } else if (cycle == 4 || cycle == 7) {
+                world.setBlockState(p.down(), Blocks.STONE_BRICKS.getDefaultState());
+                railState = Blocks.DETECTOR_RAIL.getDefaultState().with(DetectorRailBlock.POWERED, false);
+            } else {
+                world.setBlockState(p.down(), Blocks.REDSTONE_BLOCK.getDefaultState());
+                railState = Blocks.POWERED_RAIL.getDefaultState().with(PoweredRailBlock.POWERED, true);
+            }
+
+            world.setBlockState(p, railState);
         }
     }
 }
