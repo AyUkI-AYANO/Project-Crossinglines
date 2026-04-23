@@ -53,14 +53,14 @@ public final class CrossingLinesCommand {
                                                     );
 
                                                     if (line.path().isEmpty()) {
-                                                        ctx.getSource().sendError(Text.literal("未找到可行路径，请调整起终点或类型。"));
+                                                        ctx.getSource().sendError(Text.literal("No valid route found. Try different points or type."));
                                                         return 0;
                                                     }
 
                                                     RailLineState state = RailLineState.get(ctx.getSource().getWorld());
                                                     state.put(line);
 
-                                                    ctx.getSource().sendFeedback(() -> Text.literal("线路已规划: " + line.name() + "，节点数=" + line.path().size()), true);
+                                                    ctx.getSource().sendFeedback(() -> Text.literal("Route planned: " + line.name() + ", nodes=" + line.path().size()), true);
                                                     return 1;
                                                 }))))
                 .then(literal("build_latest")
@@ -76,11 +76,11 @@ public final class CrossingLinesCommand {
                                                 PLANNER.policyOf(line.type()),
                                                 settings
                                         );
-                                        ctx.getSource().sendFeedback(() -> Text.literal("已加入施工队列: " + line.name()), true);
+                                        ctx.getSource().sendFeedback(() -> Text.literal("Build queued: " + line.name()), true);
                                         return 1;
                                     })
                                     .orElseGet(() -> {
-                                        ctx.getSource().sendError(Text.literal("没有可施工的线路，请先使用 /cl plan。"));
+                                        ctx.getSource().sendError(Text.literal("No planned route. Use /cl plan first."));
                                         return 0;
                                     });
                         }))
@@ -89,7 +89,7 @@ public final class CrossingLinesCommand {
 
     private static RailType parseType(String raw) {
         return switch (raw.toLowerCase()) {
-            case "underground", "u", "地下" -> RailType.UNDERGROUND;
+            case "underground", "u" -> RailType.UNDERGROUND;
             default -> RailType.SURFACE;
         };
     }

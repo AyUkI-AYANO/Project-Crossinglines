@@ -26,24 +26,24 @@ public class RoutePlannerScreen extends Screen {
         int cx = width / 2;
         int y = height / 2 - 50;
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("设为起点"), b -> start = player.getBlockPos())
+        addDrawableChild(ButtonWidget.builder(Text.literal("Set Start"), b -> start = player.getBlockPos())
                 .dimensions(cx - 100, y, 95, 20).build());
-        addDrawableChild(ButtonWidget.builder(Text.literal("设为终点"), b -> end = player.getBlockPos())
+        addDrawableChild(ButtonWidget.builder(Text.literal("Set End"), b -> end = player.getBlockPos())
                 .dimensions(cx + 5, y, 95, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("切换类型: " + type.name()), b -> {
+        addDrawableChild(ButtonWidget.builder(Text.literal("Rail Type: " + type.name()), b -> {
                     type = (type == RailType.SURFACE) ? RailType.UNDERGROUND : RailType.SURFACE;
-                    b.setMessage(Text.literal("切换类型: " + type.name()));
+                    b.setMessage(Text.literal("Rail Type: " + type.name()));
                 }).dimensions(cx - 100, y + 26, 200, 20)
                 .build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("规划并预览"), b -> sendPlanCommand())
+        addDrawableChild(ButtonWidget.builder(Text.literal("Plan Route"), b -> sendPlanCommand())
                 .dimensions(cx - 100, y + 52, 200, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("开始施工"), b -> sendBuildCommand())
+        addDrawableChild(ButtonWidget.builder(Text.literal("Start Build"), b -> sendBuildCommand())
                 .dimensions(cx - 100, y + 78, 200, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("关闭"), b -> close())
+        addDrawableChild(ButtonWidget.builder(Text.literal("Close"), b -> close())
                 .dimensions(cx - 100, y + 104, 200, 20).build());
     }
 
@@ -74,13 +74,13 @@ public class RoutePlannerScreen extends Screen {
 
         int cx = width / 2;
         int baseY = height / 2 - 80;
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("CrossingLines b1.0 规划器"), cx, baseY, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal("CrossingLines b1.0 Planner"), cx, baseY, 0xFFFFFF);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("Start: " + toShort(start)), cx, baseY + 14, 0xAAAAAA);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("End: " + toShort(end)), cx, baseY + 28, 0xAAAAAA);
     }
 
     private String toShort(BlockPos pos) {
-        if (pos == null) return "未设置";
+        if (pos == null) return "Not set";
         Vec3i v = pos;
         return v.getX() + "," + v.getY() + "," + v.getZ();
     }
