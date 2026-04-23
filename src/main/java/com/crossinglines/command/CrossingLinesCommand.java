@@ -18,8 +18,8 @@ import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 import static net.minecraft.command.argument.BlockPosArgumentType.blockPos;
 import static net.minecraft.command.argument.BlockPosArgumentType.getBlockPos;
-import static net.minecraft.command.argument.StringArgumentType.getString;
-import static net.minecraft.command.argument.StringArgumentType.word;
+import static com.mojang.brigadier.arguments.StringArgumentType.getString;
+import static com.mojang.brigadier.arguments.StringArgumentType.word;
 
 public final class CrossingLinesCommand {
     private static final RailPlannerService PLANNER = new RailPlannerService();
