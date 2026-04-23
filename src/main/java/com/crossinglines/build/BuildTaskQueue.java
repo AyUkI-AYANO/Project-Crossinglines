@@ -105,6 +105,11 @@ public final class BuildTaskQueue {
                 return false;
             }
 
+            if (!isStraight(index)) {
+                poweredModuleRemaining = 0;
+                return false;
+            }
+
             if (poweredModuleRemaining > 0) {
                 poweredModuleRemaining--;
                 return true;
