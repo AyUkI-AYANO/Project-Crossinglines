@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "crossinglines",
+  "version": "${version}",
+  "name": "Project CrossingLines",
+  "description": "Visual rail planning and generation mod for Minecraft 1.21.4 Fabric",
+  "authors": [
+    "CrossingLines Team"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.crossinglines.CrossingLinesMod"
+    ],
+    "client": [
+      "com.crossinglines.client.CrossingLinesClientMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.10",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
