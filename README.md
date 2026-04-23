@@ -65,6 +65,36 @@ src/main/java/com/crossinglines
 - 当前为可运行的基础版本，重点在“规划 -> 保存 -> 施工”闭环。
 - 预览渲染、撤销施工、多线路并发优先级、更多设施模板等属于后续版本。
 
+
+## 常见报错排查
+
+### 1) `Plugin [id: 'fabric-loom'] was not found`
+
+这是因为 Gradle 在插件解析阶段没有找到 Fabric Maven。你需要：
+
+- 确保 `settings.gradle` 中有 `pluginManagement.repositories`，并包含：
+  - `https://maven.fabricmc.net/`
+  - `gradlePluginPortal()`
+- 重新执行：
+
+```bash
+gradle --refresh-dependencies build
+```
+
+### 2) `Unsupported class file major version 69`
+
+这是 **JDK 25** 导致的兼容性问题（Loom/Gradle 脚本链路通常建议 JDK 21）。
+
+- 切换到 JDK 21 后再构建。
+- Windows PowerShell 示例：
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+java -version
+gradle build
+```
+
 ## 许可证
 
 MIT
