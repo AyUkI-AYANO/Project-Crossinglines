@@ -33,58 +33,61 @@ public final class CrossingLinesCommand {
     private static void registerRoot(CommandDispatcher<ServerCommandSource> dispatcher,
                                      CommandRegistryAccess access,
                                      CommandManager.RegistrationEnvironment env) {
+        var planCommand = literal("plan")
+                .then(argument("start", blockPos())
+                        .then(argument("end", blockPos())
+                                .then(argument("type", word())
+                                        .executes(ctx -> {
+                                            BlockPos start = getBlockPos(ctx, "start");
+                                            BlockPos end = getBlockPos(ctx, "end");
+                                            RailType type = parseType(getString(ctx, "type"));
+
+                                            RailSettings settings = RailSettings.defaults();
+                                            RailLine line = PLANNER.plan(
+                                                    ctx.getSource().getWorld(),
+                                                    start,
+                                                    end,
+                                                    type,
+                                                    settings
+                                            );
+
+                                            if (line.path().isEmpty()) {
+                                                ctx.getSource().sendError(Text.literal("No valid route found. Try different points or type."));
+                                                return 0;
+                                            }
+
+                                            RailLineState state = RailLineState.get(ctx.getSource().getWorld());
+                                            state.put(line);
+
+                                            ctx.getSource().sendFeedback(() -> Text.literal("Route planned: " + line.name() + ", nodes=" + line.path().size()), true);
+                                            return 1;
+                                        }))));
+
+        var buildLatestCommand = literal("build_latest")
+                .executes(ctx -> {
+                    RailLineState state = RailLineState.get(ctx.getSource().getWorld());
+                    RailSettings settings = RailSettings.defaults();
+
+                    return state.latest()
+                            .map(line -> {
+                                BuildTaskQueue.enqueue(
+                                        ctx.getSource().getWorld(),
+                                        line,
+                                        PLANNER.policyOf(line.type()),
+                                        settings
+                                );
+                                ctx.getSource().sendFeedback(() -> Text.literal("Build queued: " + line.name()), true);
+                                return 1;
+                            })
+                            .orElseGet(() -> {
+                                ctx.getSource().sendError(Text.literal("No planned route. Use /cl plan first."));
+                                return 0;
+                            });
+                });
+
         dispatcher.register(literal("cl")
-                .then(literal("plan")
-                        .then(argument("start", blockPos())
-                                .then(argument("end", blockPos())
-                                        .then(argument("type", word())
-                                                .executes(ctx -> {
-                                                    BlockPos start = getBlockPos(ctx, "start");
-                                                    BlockPos end = getBlockPos(ctx, "end");
-                                                    RailType type = parseType(getString(ctx, "type"));
-
-                                                    RailSettings settings = RailSettings.defaults();
-                                                    RailLine line = PLANNER.plan(
-                                                            ctx.getSource().getWorld(),
-                                                            start,
-                                                            end,
-                                                            type,
-                                                            settings
-                                                    );
-
-                                                    if (line.path().isEmpty()) {
-                                                        ctx.getSource().sendError(Text.literal("No valid route found. Try different points or type."));
-                                                        return 0;
-                                                    }
-
-                                                    RailLineState state = RailLineState.get(ctx.getSource().getWorld());
-                                                    state.put(line);
-
-                                                    ctx.getSource().sendFeedback(() -> Text.literal("Route planned: " + line.name() + ", nodes=" + line.path().size()), true);
-                                                    return 1;
-                                                }))))
-                .then(literal("build_latest")
-                        .executes(ctx -> {
-                            RailLineState state = RailLineState.get(ctx.getSource().getWorld());
-                            RailSettings settings = RailSettings.defaults();
-
-                            return state.latest()
-                                    .map(line -> {
-                                        BuildTaskQueue.enqueue(
-                                                ctx.getSource().getWorld(),
-                                                line,
-                                                PLANNER.policyOf(line.type()),
-                                                settings
-                                        );
-                                        ctx.getSource().sendFeedback(() -> Text.literal("Build queued: " + line.name()), true);
-                                        return 1;
-                                    })
-                                    .orElseGet(() -> {
-                                        ctx.getSource().sendError(Text.literal("No planned route. Use /cl plan first."));
-                                        return 0;
-                                    });
-                        }))
-        );
+                .then(planCommand)
+                .then(buildLatestCommand));
     }
 
     private static RailType parseType(String raw) {
