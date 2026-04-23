@@ -92,7 +92,7 @@ public final class CrossingLinesCommand {
 
     private static RailType parseType(String raw) {
         return switch (raw.toLowerCase()) {
-            case "underground", "u" -> RailType.UNDERGROUND;
+            case "embankment", "e", "underground", "u" -> RailType.EMBANKMENT;
             default -> RailType.SURFACE;
         };
     }
