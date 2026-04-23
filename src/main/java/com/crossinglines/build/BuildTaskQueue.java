@@ -5,7 +5,6 @@ import com.crossinglines.model.RailLine;
 import com.crossinglines.model.RailSettings;
 import net.minecraft.block.BlockState;
 import com.crossinglines.planner.FacilityPolicy;
-import net.minecraft.block.DetectorRailBlock;
 import net.minecraft.block.PoweredRailBlock;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.MinecraftServer;
@@ -44,6 +43,8 @@ public final class BuildTaskQueue {
         private final RailSettings settings;
         private final List<BlockPos> path;
         private final Set<BlockPos> railPositions;
+        private int poweredModuleRemaining;
+        private int lastModuleStart;
         private int cursor;
 
         private BuildTask(ServerWorld world, RailLine line, FacilityPolicy policy, RailSettings settings) {
@@ -53,6 +54,8 @@ public final class BuildTaskQueue {
             this.settings = settings;
             this.path = line.path();
             this.railPositions = new HashSet<>(line.path());
+            this.poweredModuleRemaining = 0;
+            this.lastModuleStart = Integer.MIN_VALUE / 2;
             this.cursor = 0;
         }
 
@@ -84,21 +87,11 @@ public final class BuildTaskQueue {
         private void placeRail(BlockPos p, int index) {
             world.setBlockState(p, Blocks.AIR.getDefaultState());
 
-            boolean turn = isTurn(index);
-            boolean isDBD = canPlaceDetectorBoostDetector(index);
             BlockState railState = Blocks.RAIL.getDefaultState();
 
-            if (!turn && isDBD) {
-                int phase = index % 8;
-                if (phase == 4 || phase == 6) {
-                    railState = Blocks.DETECTOR_RAIL.getDefaultState().with(DetectorRailBlock.POWERED, false);
-                    world.setBlockState(p.down(), Blocks.STONE_BRICKS.getDefaultState());
-                } else if (phase == 5) {
-                    railState = Blocks.POWERED_RAIL.getDefaultState().with(PoweredRailBlock.POWERED, true);
-                    world.setBlockState(p.down(), Blocks.REDSTONE_BLOCK.getDefaultState());
-                } else {
-                    world.setBlockState(p.down(), Blocks.STONE_BRICKS.getDefaultState());
-                }
+            if (shouldPlacePoweredRail(index)) {
+                railState = Blocks.POWERED_RAIL.getDefaultState().with(PoweredRailBlock.POWERED, true);
+                world.setBlockState(p.down(), Blocks.REDSTONE_BLOCK.getDefaultState());
             } else {
                 world.setBlockState(p.down(), Blocks.STONE_BRICKS.getDefaultState());
             }
@@ -106,24 +99,51 @@ public final class BuildTaskQueue {
             world.setBlockState(p, railState);
         }
 
-        private boolean canPlaceDetectorBoostDetector(int index) {
-            int phase = index % 8;
-            if (phase < 4 || phase > 6) {
+        private boolean shouldPlacePoweredRail(int index) {
+            if (index <= 0 || index >= path.size() - 1) {
+                poweredModuleRemaining = 0;
                 return false;
             }
 
-            int moduleStart = index - phase + 4;
-            if (moduleStart + 2 >= path.size()) {
+            if (poweredModuleRemaining > 0) {
+                poweredModuleRemaining--;
+                return true;
+            }
+
+            int minGap = isStraight(index) ? 8 : 4;
+            if (index - lastModuleStart < minGap) {
                 return false;
             }
 
-            return isStraight(moduleStart)
-                    && isStraight(moduleStart + 1)
-                    && isStraight(moduleStart + 2);
+            int moduleLength = resolveModuleLength(index);
+            if (moduleLength <= 0) {
+                return false;
+            }
+
+            lastModuleStart = index;
+            poweredModuleRemaining = moduleLength - 1;
+            return true;
         }
 
-        private boolean isTurn(int index) {
-            return !isStraight(index);
+        private int resolveModuleLength(int startIndex) {
+            int straightLength = countContinuous(startIndex, true);
+            if (straightLength > 0) {
+                return straightLength;
+            }
+
+            int curveLength = countContinuous(startIndex, false);
+            return Math.max(1, curveLength);
+        }
+
+        private int countContinuous(int startIndex, boolean straight) {
+            int length = 0;
+            for (int i = startIndex; i < path.size() - 1 && length < 3; i++) {
+                if (isStraight(i) != straight) {
+                    break;
+                }
+                length++;
+            }
+            return length;
         }
 
         private boolean isStraight(int index) {
