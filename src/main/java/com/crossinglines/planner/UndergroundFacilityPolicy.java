@@ -4,9 +4,14 @@ import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Set;
+
 public class UndergroundFacilityPolicy implements FacilityPolicy {
     @Override
-    public void decorate(ServerWorld world, BlockPos railPos, BlockPos prevPos, BlockPos nextPos, int index, int lightSpacing) {
+    public void decorate(ServerWorld world, BlockPos railPos, BlockPos prevPos, BlockPos nextPos, int index, int lightSpacing, Set<BlockPos> railPositions) {
+        world.setBlockState(railPos, Blocks.AIR.getDefaultState());
+        world.setBlockState(railPos.up(), Blocks.AIR.getDefaultState());
+
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 world.setBlockState(railPos.add(dx, -1, dz), Blocks.STONE_BRICKS.getDefaultState());
