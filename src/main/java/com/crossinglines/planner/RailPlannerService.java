@@ -28,6 +28,6 @@ public class RailPlannerService {
     }
 
     public FacilityPolicy policyOf(RailType type) {
-        return type == RailType.UNDERGROUND ? new UndergroundFacilityPolicy() : new SurfaceFacilityPolicy();
+        return type == RailType.SURFACE ? new SurfaceFacilityPolicy() : new EmbankmentFacilityPolicy();
     }
 }

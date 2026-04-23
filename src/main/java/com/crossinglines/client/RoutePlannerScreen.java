@@ -32,7 +32,7 @@ public class RoutePlannerScreen extends Screen {
                 .dimensions(cx + 5, y, 95, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Rail Type: " + type.name()), b -> {
-                    type = (type == RailType.SURFACE) ? RailType.UNDERGROUND : RailType.SURFACE;
+                    type = (type == RailType.SURFACE) ? RailType.EMBANKMENT : RailType.SURFACE;
                     b.setMessage(Text.literal("Rail Type: " + type.name()));
                 }).dimensions(cx - 100, y + 26, 200, 20)
                 .build());

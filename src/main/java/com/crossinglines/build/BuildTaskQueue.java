@@ -119,9 +119,7 @@ public final class BuildTaskQueue {
 
             return isStraight(moduleStart)
                     && isStraight(moduleStart + 1)
-                    && isStraight(moduleStart + 2)
-                    && isFlat(moduleStart, moduleStart + 1)
-                    && isFlat(moduleStart + 1, moduleStart + 2);
+                    && isStraight(moduleStart + 2);
         }
 
         private boolean isTurn(int index) {
@@ -143,8 +141,5 @@ public final class BuildTaskQueue {
             return dx1 == dx2 && dz1 == dz2;
         }
 
-        private boolean isFlat(int i, int j) {
-            return path.get(i).getY() == path.get(j).getY();
-        }
     }
 }
