@@ -32,7 +32,7 @@ public class TerrainPathFinder {
                 return reconstruct(current);
             }
 
-            for (BlockPos next : neighbors(world, current.pos(), type, settings, undergroundY)) {
+            for (BlockPos next : neighbors(world, current, type, settings, undergroundY)) {
                 double tentativeG = current.g() + moveCost(current.pos(), next, type);
                 if (tentativeG >= bestG.getOrDefault(next, Double.POSITIVE_INFINITY)) continue;
 
@@ -45,8 +45,9 @@ public class TerrainPathFinder {
         return List.of();
     }
 
-    private List<BlockPos> neighbors(ServerWorld world, BlockPos pos, RailType type, RailSettings settings, Integer undergroundY) {
+    private List<BlockPos> neighbors(ServerWorld world, Node current, RailType type, RailSettings settings, Integer undergroundY) {
         List<BlockPos> result = new ArrayList<>(4);
+        BlockPos pos = current.pos();
         int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
         for (int[] d : dirs) {
@@ -63,9 +64,30 @@ public class TerrainPathFinder {
             int slope = Math.abs(ny - pos.getY());
             if (slope > settings.maxSlopePerStep()) continue;
 
-            result.add(new BlockPos(nx, ny, nz));
+            BlockPos next = new BlockPos(nx, ny, nz);
+            if (violatesTurnBeforeClimb(current, next)) continue;
+
+            result.add(next);
         }
         return result;
+    }
+
+    private boolean violatesTurnBeforeClimb(Node current, BlockPos next) {
+        if (next.getY() == current.pos().getY()) {
+            return false;
+        }
+        if (current.parent() == null || current.parent().parent() == null) {
+            return false;
+        }
+
+        BlockPos prev = current.parent().pos();
+        BlockPos curr = current.pos();
+        int dx1 = Integer.signum(curr.getX() - prev.getX());
+        int dz1 = Integer.signum(curr.getZ() - prev.getZ());
+        int dx2 = Integer.signum(next.getX() - curr.getX());
+        int dz2 = Integer.signum(next.getZ() - curr.getZ());
+
+        return dx1 != dx2 || dz1 != dz2;
     }
 
     private double moveCost(BlockPos a, BlockPos b, RailType type) {
