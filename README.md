@@ -83,7 +83,7 @@ src/main/java/com/crossinglines
 
 ### b1.2 hotfix (2026-04-24)
 
-- 补回 `TerrainPathFinder.findPath(..., RailType, RailSettings)` 兼容签名（内部委托到当前实现），修复旧调用链在不同分支/缓存环境下可能出现的编译错误。
+- 移除 `TerrainPathFinder` 中对 `RailType` 的兼容签名，避免在部分环境中出现 `RailType` 解析失败导致的编译中断。
 
 
 ## 常见报错排查
