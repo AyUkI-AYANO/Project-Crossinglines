@@ -75,7 +75,7 @@ public class RoutePlannerScreen extends Screen {
 
         int cx = width / 2;
         int baseY = height / 2 - 80;
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("CrossingLines b1.1 Planner"), cx, baseY, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal("CrossingLines b1.2 Planner"), cx, baseY, 0xFFFFFF);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("Start: " + toShort(start)), cx, baseY + 14, 0xAAAAAA);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("End: " + toShort(end)), cx, baseY + 28, 0xAAAAAA);
     }

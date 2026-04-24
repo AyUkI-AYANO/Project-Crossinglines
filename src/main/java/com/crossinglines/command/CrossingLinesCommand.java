@@ -85,9 +85,30 @@ public final class CrossingLinesCommand {
                             });
                 });
 
+        var cancelBuildCommand = literal("cancel_build")
+                .executes(ctx -> {
+                    int cancelled = BuildTaskQueue.cancelAll();
+                    if (cancelled <= 0) {
+                        ctx.getSource().sendError(Text.literal("No build task in queue."));
+                        return 0;
+                    }
+                    int total = cancelled;
+                    ctx.getSource().sendFeedback(() -> Text.literal("Cancelled build tasks: " + total), true);
+                    return 1;
+                });
+
+        var queueStatusCommand = literal("queue_status")
+                .executes(ctx -> {
+                    int pending = BuildTaskQueue.pendingTasks();
+                    ctx.getSource().sendFeedback(() -> Text.literal("Build queue size: " + pending), false);
+                    return 1;
+                });
+
         dispatcher.register(literal("cl")
                 .then(planCommand)
-                .then(buildLatestCommand));
+                .then(buildLatestCommand)
+                .then(cancelBuildCommand)
+                .then(queueStatusCommand));
     }
 
     private static RailType parseType(String raw) {
