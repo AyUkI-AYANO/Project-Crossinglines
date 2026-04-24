@@ -36,6 +36,16 @@ public final class BuildTaskQueue {
         }
     }
 
+    public static int cancelAll() {
+        int count = TASKS.size();
+        TASKS.clear();
+        return count;
+    }
+
+    public static int pendingTasks() {
+        return TASKS.size();
+    }
+
     private static final class BuildTask {
         private final ServerWorld world;
         private final RailLine line;

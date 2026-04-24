@@ -15,7 +15,7 @@ public class RailPlannerService {
     private final TerrainPathFinder pathFinder = new TerrainPathFinder();
 
     public RailLine plan(ServerWorld world, BlockPos start, BlockPos end, RailType type, RailSettings settings) {
-        List<BlockPos> path = pathFinder.findPath(world, start, end, type, settings);
+        List<BlockPos> path = pathFinder.findPath(world, start, end, settings);
         return new RailLine(
                 UUID.randomUUID(),
                 "Line-" + System.currentTimeMillis(),
