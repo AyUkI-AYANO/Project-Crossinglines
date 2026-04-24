@@ -3,6 +3,7 @@ package com.crossinglines.build;
 import com.crossinglines.model.BuildStatus;
 import com.crossinglines.model.RailLine;
 import com.crossinglines.model.RailSettings;
+import com.crossinglines.model.Station;
 import net.minecraft.block.BlockState;
 import com.crossinglines.planner.FacilityPolicy;
 import net.minecraft.block.PoweredRailBlock;
@@ -58,6 +59,7 @@ public final class BuildTaskQueue {
         private int poweredModuleRemaining;
         private int lastModuleStart;
         private int cursor;
+        private boolean stationsBuilt;
 
         private BuildTask(ServerWorld world, RailLine line, FacilityPolicy policy, RailSettings settings) {
             this.world = world;
@@ -69,6 +71,7 @@ public final class BuildTaskQueue {
             this.poweredModuleRemaining = 0;
             this.lastModuleStart = Integer.MIN_VALUE / 2;
             this.cursor = 0;
+            this.stationsBuilt = false;
         }
 
         private boolean tick() {
@@ -89,11 +92,41 @@ public final class BuildTaskQueue {
             }
 
             if (cursor >= path.size()) {
+                if (!stationsBuilt) {
+                    buildStations();
+                    stationsBuilt = true;
+                }
                 line.setStatus(BuildStatus.FINISHED);
                 return true;
             }
 
             return false;
+        }
+
+        private void buildStations() {
+            for (Station station : line.stations()) {
+                BlockPos center = station.pos();
+                for (int dz = -2; dz <= 2; dz++) {
+                    world.setBlockState(center.add(1, -1, dz), Blocks.SMOOTH_STONE.getDefaultState());
+                    world.setBlockState(center.add(-1, -1, dz), Blocks.SMOOTH_STONE.getDefaultState());
+                    world.setBlockState(center.add(1, 0, dz), Blocks.STONE_BRICK_SLAB.getDefaultState());
+                    world.setBlockState(center.add(-1, 0, dz), Blocks.STONE_BRICK_SLAB.getDefaultState());
+                }
+
+                world.setBlockState(center.down(), Blocks.REDSTONE_BLOCK.getDefaultState());
+                BlockState powered = Blocks.POWERED_RAIL.getDefaultState()
+                        .with(PoweredRailBlock.POWERED, true)
+                        .with(PoweredRailBlock.SHAPE, RailShape.NORTH_SOUTH);
+                world.setBlockState(center, powered);
+
+                BlockPos buttonPos = center.add(2, 1, 0);
+                world.setBlockState(buttonPos, Blocks.STONE.getDefaultState());
+                world.setBlockState(buttonPos.up(), Blocks.STONE_BUTTON.getDefaultState());
+
+                BlockPos signPos = center.add(-2, 1, 0);
+                world.setBlockState(signPos, Blocks.OAK_PLANKS.getDefaultState());
+                world.setBlockState(signPos.up(), Blocks.OAK_SIGN.getDefaultState());
+            }
         }
 
         private void placeRail(BlockPos p, int index) {

@@ -16,15 +16,24 @@ public class RailLine {
     private final BlockPos end;
     private final RailType type;
     private final List<BlockPos> path;
+    private final List<Station> stations;
     private BuildStatus status;
 
-    public RailLine(UUID id, String name, BlockPos start, BlockPos end, RailType type, List<BlockPos> path, BuildStatus status) {
+    public RailLine(UUID id,
+                    String name,
+                    BlockPos start,
+                    BlockPos end,
+                    RailType type,
+                    List<BlockPos> path,
+                    List<Station> stations,
+                    BuildStatus status) {
         this.id = id;
         this.name = name;
         this.start = start;
         this.end = end;
         this.type = type;
         this.path = path;
+        this.stations = new ArrayList<>(stations);
         this.status = status;
     }
 
@@ -34,10 +43,38 @@ public class RailLine {
     public BlockPos end() { return end; }
     public RailType type() { return type; }
     public List<BlockPos> path() { return path; }
+    public List<Station> stations() { return stations; }
     public BuildStatus status() { return status; }
 
     public void setStatus(BuildStatus status) {
         this.status = status;
+    }
+
+    public void rename(String newName) {
+        this.name = newName;
+    }
+
+    public void addStation(String stationName, BlockPos pos) {
+        stations.add(new Station(UUID.randomUUID(), stationName, pos));
+    }
+
+    public boolean renameStation(int index, String newName) {
+        if (index < 0 || index >= stations.size()) {
+            return false;
+        }
+        stations.get(index).rename(newName);
+        return true;
+    }
+
+    public String overview() {
+        return "%s [%s] path=%d stations=%d status=%s id=%s".formatted(
+                name,
+                type.name(),
+                path.size(),
+                stations.size(),
+                status.name(),
+                id
+        );
     }
 
     public NbtCompound toNbt() {
@@ -62,6 +99,12 @@ public class RailLine {
             nbtPath.add(p);
         }
         nbt.put("path", nbtPath);
+
+        NbtList nbtStations = new NbtList();
+        for (Station station : stations) {
+            nbtStations.add(station.toNbt());
+        }
+        nbt.put("stations", nbtStations);
         return nbt;
     }
 
@@ -80,6 +123,13 @@ public class RailLine {
             NbtCompound p = list.getCompound(i);
             path.add(new BlockPos(p.getInt("x"), p.getInt("y"), p.getInt("z")));
         }
-        return new RailLine(id, name, start, end, type, path, status);
+
+        List<Station> stations = new ArrayList<>();
+        NbtList stationList = nbt.getList("stations", NbtElement.COMPOUND_TYPE);
+        for (int i = 0; i < stationList.size(); i++) {
+            stations.add(Station.fromNbt(stationList.getCompound(i)));
+        }
+
+        return new RailLine(id, name, start, end, type, path, stations, status);
     }
 }

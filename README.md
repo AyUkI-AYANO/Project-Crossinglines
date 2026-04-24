@@ -1,9 +1,13 @@
-# Project CrossingLines (b1.2)
+# Project CrossingLines (2.0.0)
 
 一个基于 **Minecraft Java 1.21.4 + Fabric** 的铁路规划与施工 Mod。
 
-## b1.2 已实现功能
+## 2.0.0 已实现功能
 
+- 全新 UI 规划器：更大面板、站点开关、额外站点快捷添加、线路管理器入口。
+- 站点系统：支持起终点自动创建站点，并可附加额外站点；施工时生成月台、发车按钮与动力轨。
+- 线路管理命令组：支持线路列表概览、重命名线路、增加站点、重命名站点。
+- UI 交互修复：菜单打开时不再阻止玩家移动，并保留上次规划坐标与站点设置。
 - 可视化规划入口：客户端按 `P` 打开规划器界面。
 - 两点铁路规划：支持 `SURFACE`（经典地面）、`EMBANKMENT`（堤式地面）与 `UNDERGROUND`（地下线）三种类型。
 - 地形感知路径搜索：基于 A* 的简化实现，考虑高度变化并自动贴地生成。
@@ -45,6 +49,16 @@ gradle build
   - `type` 支持：`surface` / `embankment`（别名 `e`）/ `underground`（别名 `u`）。
 - `/cl build_latest`
   - 施工最近一次成功规划的线路。
+- `/cl list_lines`
+  - 查看线路管理器概览（线路信息 + 站点）。
+- `/cl rename_line <lineId> <newName>`
+  - 重命名指定线路。
+- `/cl add_station <lineId> <x y z> <name>`
+  - 向指定线路新增站点。
+- `/cl add_station_latest <x y z> <name>`
+  - 向最近规划线路新增站点。
+- `/cl rename_station <lineId> <index> <newName>`
+  - 重命名线路中的站点（index 从 0 开始）。
 - `/cl queue_status`
   - 查看当前施工队列长度。
 - `/cl cancel_build`
@@ -72,6 +86,15 @@ src/main/java/com/crossinglines
 - 预览渲染、撤销施工、多线路并发优先级、更多设施模板等属于后续版本。
 
 ## Changelog
+
+### 2.0.0 (2026-04-24)
+
+- 重构 `RoutePlannerScreen`，提供更完整的规划面板、站点开关与额外站点管理。
+- 新增 `LineManagerScreen`，支持从 UI 触发线路管理操作（刷新、重命名线路、新增站点、重命名站点）。
+- 扩展 `RailLine` 数据结构，持久化站点信息。
+- 扩展 `/cl` 命令：`list_lines`、`rename_line`、`add_station`、`add_station_latest`、`rename_station`。
+- 施工流程新增站点结构建造（月台、发车按钮、动力铁轨）。
+- 修复 UI 打开后玩家无法移动、关闭后丢失上次规划坐标与设置的问题。
 
 ### b1.2 (2026-04-24)
 
