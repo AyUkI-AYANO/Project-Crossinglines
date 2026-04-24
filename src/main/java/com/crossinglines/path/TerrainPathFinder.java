@@ -8,6 +8,7 @@ import net.minecraft.world.Heightmap;
 import java.util.*;
 
 public class TerrainPathFinder {
+    private static final double HEIGHT_COST_WEIGHT = 2.5;
     private record Node(BlockPos pos, double g, double f, Node parent) {}
 
     public List<BlockPos> findPath(ServerWorld world, BlockPos start, BlockPos end, RailSettings settings) {
@@ -85,11 +86,8 @@ public class TerrainPathFinder {
 
     private double moveCost(BlockPos a, BlockPos b) {
         int dy = Math.abs(a.getY() - b.getY());
-        double cost = 1.0 + dy * 2.5;
-        if (type == RailType.UNDERGROUND) {
-            cost += 0.3;
-        }
-        return cost;
+        // Keep the cost model terrain-only; do not branch by RailType here.
+        return 1.0 + dy * HEIGHT_COST_WEIGHT;
     }
 
     private double heuristic(BlockPos a, BlockPos b) {

@@ -84,6 +84,7 @@ src/main/java/com/crossinglines
 ### b1.2 hotfix (2026-04-24)
 
 - 移除 `TerrainPathFinder` 中对 `RailType` 的兼容签名，避免在部分环境中出现 `RailType` 解析失败导致的编译中断。
+- `TerrainPathFinder` 的 `moveCost` 明确保持“仅地形成本”实现，不再出现地下线路分支残留。
 
 
 ## 常见报错排查
