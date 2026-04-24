@@ -86,6 +86,9 @@ public class TerrainPathFinder {
     private double moveCost(BlockPos a, BlockPos b) {
         int dy = Math.abs(a.getY() - b.getY());
         double cost = 1.0 + dy * 2.5;
+        if (type == RailType.UNDERGROUND) {
+            cost += 0.3;
+        }
         return cost;
     }
 
