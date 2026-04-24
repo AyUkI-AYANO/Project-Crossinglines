@@ -35,7 +35,6 @@ public class RoutePlannerScreen extends Screen {
 
     @Override
     protected void init() {
-        this.passEvents = true;
         restoreLastState();
 
         int cx = width / 2;

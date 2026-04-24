@@ -24,7 +24,6 @@ public class LineManagerScreen extends Screen {
 
     @Override
     protected void init() {
-        this.passEvents = true;
         int cx = width / 2;
         int y = height / 2 - 90;
 
