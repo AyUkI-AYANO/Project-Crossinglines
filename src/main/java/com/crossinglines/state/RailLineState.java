@@ -34,8 +34,16 @@ public class RailLineState extends PersistentState {
         return Optional.ofNullable(lines.get(latestPlanned));
     }
 
+    public Optional<RailLine> byId(UUID id) {
+        return Optional.ofNullable(lines.get(id));
+    }
+
     public Collection<RailLine> all() {
         return lines.values();
+    }
+
+    public void dirty() {
+        markDirty();
     }
 
     @Override
