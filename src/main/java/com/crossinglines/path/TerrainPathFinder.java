@@ -12,7 +12,7 @@ public class TerrainPathFinder {
     private record Node(BlockPos pos, double g, double f, Node parent) {}
 
     public List<BlockPos> findPath(ServerWorld world, BlockPos start, BlockPos end, RailType type, RailSettings settings) {
-        Integer undergroundY = null;
+        Integer undergroundY = resolveUndergroundY(world, start, end, type, settings);
         PriorityQueue<Node> open = new PriorityQueue<>(Comparator.comparingDouble(Node::f));
         Map<BlockPos, Double> bestG = new HashMap<>();
 
@@ -53,9 +53,9 @@ public class TerrainPathFinder {
         for (int[] d : dirs) {
             int nx = pos.getX() + d[0];
             int nz = pos.getZ() + d[1];
-            int ny;
-
-            ny = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, nx, nz);
+            int ny = type == RailType.UNDERGROUND && undergroundY != null
+                    ? undergroundY
+                    : world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, nx, nz);
 
             int slope = Math.abs(ny - pos.getY());
             if (slope > settings.maxSlopePerStep()) continue;
@@ -89,6 +89,9 @@ public class TerrainPathFinder {
     private double moveCost(BlockPos a, BlockPos b, RailType type) {
         int dy = Math.abs(a.getY() - b.getY());
         double cost = 1.0 + dy * 2.5;
+        if (type == RailType.UNDERGROUND) {
+            cost += 0.3;
+        }
         return cost;
     }
 
@@ -107,12 +110,21 @@ public class TerrainPathFinder {
     }
 
     private BlockPos normalize(ServerWorld world, BlockPos pos, RailType type, RailSettings settings, Integer undergroundY) {
-        int y;
-        y = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
+        int y = type == RailType.UNDERGROUND && undergroundY != null
+                ? undergroundY
+                : world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
         return new BlockPos(pos.getX(), y, pos.getZ());
     }
 
     private Integer resolveUndergroundY(ServerWorld world, BlockPos start, BlockPos end, RailType type, RailSettings settings) {
-        return null;
+        if (type != RailType.UNDERGROUND) {
+            return null;
+        }
+
+        int startSurfaceY = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, start.getX(), start.getZ());
+        int endSurfaceY = world.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, end.getX(), end.getZ());
+        int baseSurfaceY = Math.min(startSurfaceY, endSurfaceY);
+        int minBuildY = world.getBottomY() + 5;
+        return Math.max(minBuildY, baseSurfaceY - Math.max(4, settings.undergroundDepth()));
     }
 }
