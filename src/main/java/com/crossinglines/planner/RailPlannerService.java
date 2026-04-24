@@ -28,6 +28,10 @@ public class RailPlannerService {
     }
 
     public FacilityPolicy policyOf(RailType type) {
-        return type == RailType.SURFACE ? new SurfaceFacilityPolicy() : new EmbankmentFacilityPolicy();
+        return switch (type) {
+            case SURFACE -> new SurfaceFacilityPolicy();
+            case UNDERGROUND -> new UndergroundFacilityPolicy();
+            case EMBANKMENT -> new EmbankmentFacilityPolicy();
+        };
     }
 }

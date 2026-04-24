@@ -15,6 +15,7 @@ public class RoutePlannerScreen extends Screen {
     private BlockPos start;
     private BlockPos end;
     private RailType type = RailType.SURFACE;
+    private static final RailType[] TYPE_CYCLE = {RailType.SURFACE, RailType.EMBANKMENT, RailType.UNDERGROUND};
 
     protected RoutePlannerScreen(PlayerEntity player) {
         super(Text.literal("CrossingLines Planner"));
@@ -32,7 +33,7 @@ public class RoutePlannerScreen extends Screen {
                 .dimensions(cx + 5, y, 95, 20).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Rail Type: " + type.name()), b -> {
-                    type = (type == RailType.SURFACE) ? RailType.EMBANKMENT : RailType.SURFACE;
+                    type = nextType(type);
                     b.setMessage(Text.literal("Rail Type: " + type.name()));
                 }).dimensions(cx - 100, y + 26, 200, 20)
                 .build());
@@ -74,9 +75,18 @@ public class RoutePlannerScreen extends Screen {
 
         int cx = width / 2;
         int baseY = height / 2 - 80;
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("CrossingLines b1.0 Planner"), cx, baseY, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, Text.literal("CrossingLines b1.1 Planner"), cx, baseY, 0xFFFFFF);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("Start: " + toShort(start)), cx, baseY + 14, 0xAAAAAA);
         context.drawCenteredTextWithShadow(textRenderer, Text.literal("End: " + toShort(end)), cx, baseY + 28, 0xAAAAAA);
+    }
+
+    private RailType nextType(RailType current) {
+        for (int i = 0; i < TYPE_CYCLE.length; i++) {
+            if (TYPE_CYCLE[i] == current) {
+                return TYPE_CYCLE[(i + 1) % TYPE_CYCLE.length];
+            }
+        }
+        return RailType.SURFACE;
     }
 
     private String toShort(BlockPos pos) {
