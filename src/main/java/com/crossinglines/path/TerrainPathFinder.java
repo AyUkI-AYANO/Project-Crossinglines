@@ -1,7 +1,6 @@
 package com.crossinglines.path;
 
 import com.crossinglines.model.RailSettings;
-import com.crossinglines.model.RailType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
@@ -92,6 +91,9 @@ public class TerrainPathFinder {
     private double moveCost(BlockPos a, BlockPos b) {
         int dy = Math.abs(a.getY() - b.getY());
         double cost = 1.0 + dy * 2.5;
+        if (type == RailType.UNDERGROUND) {
+            cost += 0.3;
+        }
         return cost;
     }
 
