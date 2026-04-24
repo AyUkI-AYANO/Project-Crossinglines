@@ -6,6 +6,8 @@ import com.crossinglines.model.RailSettings;
 import net.minecraft.block.BlockState;
 import com.crossinglines.planner.FacilityPolicy;
 import net.minecraft.block.PoweredRailBlock;
+import net.minecraft.block.RailBlock;
+import net.minecraft.block.enums.RailShape;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
@@ -97,10 +99,14 @@ public final class BuildTaskQueue {
         private void placeRail(BlockPos p, int index) {
             world.setBlockState(p, Blocks.AIR.getDefaultState());
 
-            BlockState railState = Blocks.RAIL.getDefaultState();
+            RailShape shape = resolveRailShape(index);
+            boolean usePowered = shouldPlacePoweredRail(index, shape);
+            BlockState railState = Blocks.RAIL.getDefaultState().with(RailBlock.SHAPE, shape);
 
-            if (shouldPlacePoweredRail(index)) {
-                railState = Blocks.POWERED_RAIL.getDefaultState().with(PoweredRailBlock.POWERED, true);
+            if (usePowered) {
+                railState = Blocks.POWERED_RAIL.getDefaultState()
+                        .with(PoweredRailBlock.POWERED, true)
+                        .with(PoweredRailBlock.SHAPE, shape);
                 world.setBlockState(p.down(), Blocks.REDSTONE_BLOCK.getDefaultState());
             } else {
                 world.setBlockState(p.down(), Blocks.STONE_BRICKS.getDefaultState());
@@ -109,13 +115,13 @@ public final class BuildTaskQueue {
             world.setBlockState(p, railState);
         }
 
-        private boolean shouldPlacePoweredRail(int index) {
+        private boolean shouldPlacePoweredRail(int index, RailShape shape) {
             if (index <= 0 || index >= path.size() - 1) {
                 poweredModuleRemaining = 0;
                 return false;
             }
 
-            if (!isStraight(index)) {
+            if (isCurveShape(shape) || !isStraight(index)) {
                 poweredModuleRemaining = 0;
                 return false;
             }
@@ -138,6 +144,90 @@ public final class BuildTaskQueue {
             lastModuleStart = index;
             poweredModuleRemaining = moduleLength - 1;
             return true;
+        }
+
+        private RailShape resolveRailShape(int index) {
+            BlockPos curr = path.get(index);
+            BlockPos prev = index > 0 ? path.get(index - 1) : null;
+            BlockPos next = index + 1 < path.size() ? path.get(index + 1) : null;
+
+            if (prev == null && next == null) {
+                return RailShape.NORTH_SOUTH;
+            }
+            if (prev == null) {
+                return shapeFromSingleNeighbor(curr, next);
+            }
+            if (next == null) {
+                return shapeFromSingleNeighbor(curr, prev);
+            }
+
+            int pdx = Integer.signum(curr.getX() - prev.getX());
+            int pdz = Integer.signum(curr.getZ() - prev.getZ());
+            int ndx = Integer.signum(next.getX() - curr.getX());
+            int ndz = Integer.signum(next.getZ() - curr.getZ());
+
+            if (curr.getY() != next.getY() || curr.getY() != prev.getY()) {
+                if (next.getY() > curr.getY()) {
+                    if (ndx > 0) return RailShape.ASCENDING_EAST;
+                    if (ndx < 0) return RailShape.ASCENDING_WEST;
+                    if (ndz > 0) return RailShape.ASCENDING_SOUTH;
+                    if (ndz < 0) return RailShape.ASCENDING_NORTH;
+                }
+
+                if (prev.getY() > curr.getY()) {
+                    if (pdx > 0) return RailShape.ASCENDING_EAST;
+                    if (pdx < 0) return RailShape.ASCENDING_WEST;
+                    if (pdz > 0) return RailShape.ASCENDING_SOUTH;
+                    if (pdz < 0) return RailShape.ASCENDING_NORTH;
+                }
+            }
+
+            if (pdx != ndx || pdz != ndz) {
+                if (connectsSouth(pdz, ndz) && connectsEast(pdx, ndx)) return RailShape.SOUTH_EAST;
+                if (connectsSouth(pdz, ndz) && connectsWest(pdx, ndx)) return RailShape.SOUTH_WEST;
+                if (connectsNorth(pdz, ndz) && connectsEast(pdx, ndx)) return RailShape.NORTH_EAST;
+                if (connectsNorth(pdz, ndz) && connectsWest(pdx, ndx)) return RailShape.NORTH_WEST;
+            }
+
+            return (Math.abs(ndx) > 0 || Math.abs(pdx) > 0) ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+        }
+
+        private RailShape shapeFromSingleNeighbor(BlockPos curr, BlockPos neighbor) {
+            int dx = Integer.signum(neighbor.getX() - curr.getX());
+            int dz = Integer.signum(neighbor.getZ() - curr.getZ());
+            int dy = Integer.signum(neighbor.getY() - curr.getY());
+
+            if (dy > 0) {
+                if (dx > 0) return RailShape.ASCENDING_EAST;
+                if (dx < 0) return RailShape.ASCENDING_WEST;
+                if (dz > 0) return RailShape.ASCENDING_SOUTH;
+                if (dz < 0) return RailShape.ASCENDING_NORTH;
+            }
+
+            return Math.abs(dx) > 0 ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+        }
+
+        private boolean isCurveShape(RailShape shape) {
+            return shape == RailShape.NORTH_EAST
+                    || shape == RailShape.NORTH_WEST
+                    || shape == RailShape.SOUTH_EAST
+                    || shape == RailShape.SOUTH_WEST;
+        }
+
+        private boolean connectsNorth(int pdz, int ndz) {
+            return pdz < 0 || ndz < 0;
+        }
+
+        private boolean connectsSouth(int pdz, int ndz) {
+            return pdz > 0 || ndz > 0;
+        }
+
+        private boolean connectsEast(int pdx, int ndx) {
+            return pdx > 0 || ndx > 0;
+        }
+
+        private boolean connectsWest(int pdx, int ndx) {
+            return pdx < 0 || ndx < 0;
         }
 
         private int resolveModuleLength(int startIndex) {
