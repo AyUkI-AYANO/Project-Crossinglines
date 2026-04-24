@@ -10,6 +10,11 @@ import java.util.*;
 public class TerrainPathFinder {
     private record Node(BlockPos pos, double g, double f, Node parent) {}
 
+    @Deprecated
+    public List<BlockPos> findPath(ServerWorld world, BlockPos start, BlockPos end, RailType type, RailSettings settings) {
+        return findPath(world, start, end, settings);
+    }
+
     public List<BlockPos> findPath(ServerWorld world, BlockPos start, BlockPos end, RailSettings settings) {
         PriorityQueue<Node> open = new PriorityQueue<>(Comparator.comparingDouble(Node::f));
         Map<BlockPos, Double> bestG = new HashMap<>();

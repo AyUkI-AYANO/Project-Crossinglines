@@ -81,6 +81,10 @@ src/main/java/com/crossinglines
   - 新增 `/cl queue_status` 用于快速查看队列状态。
 - 更新全局版本号为 `b1.2` 并同步文档与界面版本标识。
 
+### b1.2 hotfix (2026-04-24)
+
+- 补回 `TerrainPathFinder.findPath(..., RailType, RailSettings)` 兼容签名（内部委托到当前实现），修复旧调用链在不同分支/缓存环境下可能出现的编译错误。
+
 
 ## 常见报错排查
 
