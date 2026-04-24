@@ -15,6 +15,6 @@ public class CrossingLinesMod implements ModInitializer {
     public void onInitialize() {
         CrossingLinesCommand.register();
         ServerTickEvents.END_SERVER_TICK.register(BuildTaskQueue::tickServer);
-        LOGGER.info("CrossingLines b1.0 initialized");
+        LOGGER.info("CrossingLines b1.2 initialized");
     }
 }
